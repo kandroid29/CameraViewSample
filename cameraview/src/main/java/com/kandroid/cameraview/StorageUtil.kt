@@ -6,10 +6,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * @author aqrlei on 2019/4/1
- */
-
 object StorageUtil {
     const val PICTURE = 0
     const val VIDEO = 1
