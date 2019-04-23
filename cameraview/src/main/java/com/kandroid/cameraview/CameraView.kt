@@ -132,6 +132,7 @@ class CameraView @JvmOverloads constructor(
 
     fun getVideoQuality() = cameraImpl.videoQuality
 
+    fun getVideoProfile() = cameraImpl.camcorderProfile
 
     fun setFacing(@Facing facing: Int) {
         cameraImpl.facing = facing

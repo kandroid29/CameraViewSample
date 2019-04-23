@@ -55,7 +55,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     private var innerQuality: Quality = Quality.HIGH
     var videoQuality: Int = CamcorderProfile.QUALITY_1080P
 
-    private val camcorderProfile: CamcorderProfile
+    val camcorderProfile: CamcorderProfile
         get() = getCamcorderProfile(videoQuality)
 
     val view: View

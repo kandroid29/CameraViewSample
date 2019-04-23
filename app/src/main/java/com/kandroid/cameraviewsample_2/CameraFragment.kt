@@ -91,6 +91,9 @@ class CameraFragment : Fragment(), View.OnClickListener {
         super.onViewCreated(view, savedInstanceState)
         initListener()
         cameraPermission = CameraPermission(this.activity!!)
+
+        //setup video recording quality
+        setVideoQuality(CamcorderProfile.QUALITY_720P)
         val videoQuality = cameraView.getVideoQuality()
         clarityTv.text = when(videoQuality) {
             CamcorderProfile.QUALITY_LOW -> "Low"
