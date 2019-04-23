@@ -3,7 +3,6 @@ package com.kandroid.cameraview
 import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
-import android.media.CamcorderProfile
 import android.os.*
 import android.support.annotation.IntDef
 import android.support.v4.view.ViewCompat
@@ -117,8 +116,6 @@ class CameraView @JvmOverloads constructor(
         }
     }
 
-    fun getMediaProfile(): CamcorderProfile = cameraImpl.camcorderProfile
-
     private fun createPreview(context: Context): PreviewImpl {
         return TextureViewPreview(context, this)
     }
@@ -128,6 +125,12 @@ class CameraView @JvmOverloads constructor(
             this.getChildAt(0).invalidate()
         }
     }
+
+    fun setVideoQuality(quality: Int) {
+        cameraImpl.videoQuality = quality
+    }
+
+    fun getVideoQuality() = cameraImpl.videoQuality
 
 
     fun setFacing(@Facing facing: Int) {

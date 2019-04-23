@@ -20,6 +20,7 @@ package com.kandroid.cameraviewsample_2
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.CamcorderProfile
 import android.media.ExifInterface
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +36,7 @@ import android.widget.Toast
 import com.aqrlei.camera.library.StorageUtil
 import com.kandroid.cameraview.CameraView
 import com.kandroid.cameraview.DefaultForegroundRenderer
+import com.kandroid.cameraview.base.CameraViewImpl
 import com.kandroid.cameraview.permission.CameraPermission
 import com.kandroid.cameraviewsample_2.dialog.MediaProfileDialog
 import kotlinx.android.synthetic.main.fragment_camera_view.*
@@ -79,7 +81,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
 
     }
 
-    private lateinit var mCameraPermission: CameraPermission
+    private lateinit var cameraPermission: CameraPermission
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_camera_view, container, false)
@@ -88,14 +90,27 @@ class CameraFragment : Fragment(), View.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initListener()
-        mCameraPermission = CameraPermission(this.activity!!)
+        cameraPermission = CameraPermission(this.activity!!)
+        val videoQuality = cameraView.getVideoQuality()
+        clarityTv.text = when(videoQuality) {
+            CamcorderProfile.QUALITY_LOW -> "Low"
+            CamcorderProfile.QUALITY_HIGH -> "High"
+            CamcorderProfile.QUALITY_QCIF -> "QCIF"
+            CamcorderProfile.QUALITY_CIF -> "CIF"
+            CamcorderProfile.QUALITY_480P -> "480P"
+            CamcorderProfile.QUALITY_720P -> "720P"
+            CamcorderProfile.QUALITY_1080P -> "1080P"
+            CamcorderProfile.QUALITY_QVGA -> "QVGA"
+            CamcorderProfile.QUALITY_2160P -> "2160P"
+            else -> "Unknown"
+        }
         cameraView.foregroundRenderer = DefaultForegroundRenderer()
     }
 
     override fun onResume() {
         super.onResume()
-        if (!mCameraPermission.hasAllPermissionsGranted()) {
-            mCameraPermission.requestPermissions()
+        if (!cameraPermission.hasAllPermissionsGranted()) {
+            cameraPermission.requestPermissions()
         } else {
             cameraView.start()
         }
@@ -120,7 +135,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
             var grant = true
             for (result in grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    mCameraPermission.showMissingPermissionError()
+                    cameraPermission.showMissingPermissionError()
                     grant = false
                     break
                 }
@@ -140,6 +155,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
             }
             R.id.takePicture -> {
                 if (!isRecording) {
+                    setVideoQuality(CameraViewImpl.Quality.HIGH)
                     val file = StorageUtil.getStorageFile(StorageUtil.VIDEO)
                     cameraView.recordVideo(file.absolutePath, CameraView.QUALITY_HIGH)
                     Toast.makeText(context, "开始录制", Toast.LENGTH_LONG).show()
@@ -168,5 +184,19 @@ class CameraFragment : Fragment(), View.OnClickListener {
             }
 
         }
+    }
+
+    private fun setVideoQuality(videoQuality: CameraViewImpl.Quality) {
+        val quality = when (videoQuality) {
+            CameraViewImpl.Quality.LOW -> CamcorderProfile.QUALITY_QVGA
+            CameraViewImpl.Quality.MEDIUM -> CamcorderProfile.QUALITY_480P
+            CameraViewImpl.Quality.HIGH -> CamcorderProfile.QUALITY_720P
+            else -> CamcorderProfile.QUALITY_HIGH
+        }
+        cameraView.setVideoQuality(quality)
+    }
+
+    private fun setVideoQuality(quality: Int) {
+        cameraView.setVideoQuality(quality)
     }
 }

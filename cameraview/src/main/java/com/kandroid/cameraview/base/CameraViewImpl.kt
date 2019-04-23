@@ -52,8 +52,10 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     protected var backgroundHandler: Handler? = null
     protected val cameraOpenCloseLock = Semaphore(1)
 
-    private var videoQuality: Quality = Quality.HIGH
-    val camcorderProfile: CamcorderProfile
+    private var innerQuality: Quality = Quality.HIGH
+    var videoQuality: Int = CamcorderProfile.QUALITY_1080P
+
+    private val camcorderProfile: CamcorderProfile
         get() = getCamcorderProfile(videoQuality)
 
     val view: View
@@ -134,7 +136,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
 
     protected fun setUpMediaRecorder(quality: Quality, savePath: String) {
         mediaRecorder?.also { recorder ->
-            videoQuality = quality
+            innerQuality = quality
             camcorderProfile.also { profile ->
                 try {
                     recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -165,19 +167,15 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
 
     abstract fun setMediaRecorderOrientationHint(mediaRecorder: MediaRecorder)
 
-    private fun getCamcorderProfile(quality: Quality): CamcorderProfile {
-        val result = when (quality) {
-            Quality.LOW -> CamcorderProfile.QUALITY_QVGA
-            Quality.MEDIUM -> CamcorderProfile.QUALITY_480P
-            Quality.HIGH -> CamcorderProfile.QUALITY_720P
-        }
+    private fun getCamcorderProfile(quality: Int): CamcorderProfile {
+        val profile = CamcorderProfile.get(quality)
+
         val index = videoSizes.ratios().size - 1
         val lowIndex = (index + 1) / 2
         val midIndex = (index + lowIndex) ushr 1
-        val profile = CamcorderProfile.get(result)
         val tempSizeSet = videoSizes.sizes(AspectRatio.of(4, 3))
 
-        val ratio = when (quality) {
+        val ratio = when (innerQuality) {
             Quality.LOW -> {
                 videoSizes.ratios().elementAt(lowIndex)
             }
