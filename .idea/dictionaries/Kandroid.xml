@@ -2,9 +2,12 @@
   <dictionary name="Kandroid">
     <words>
       <w>cameraviewsample</w>
+      <w>hevc</w>
       <w>kandroid</w>
+      <w>mpeg</w>
       <w>qcif</w>
       <w>qvga</w>
+      <w>ushr</w>
     </words>
   </dictionary>
 </component>

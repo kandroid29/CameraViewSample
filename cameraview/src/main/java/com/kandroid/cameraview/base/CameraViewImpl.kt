@@ -55,7 +55,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     private var innerQuality: Quality = Quality.HIGH
     var videoQuality: Int = CamcorderProfile.QUALITY_1080P
 
-    val camcorderProfile: CamcorderProfile
+    val camcorderProfile: MediaProfile
         get() = getCamcorderProfile(videoQuality)
 
     val view: View
@@ -167,27 +167,21 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
 
     abstract fun setMediaRecorderOrientationHint(mediaRecorder: MediaRecorder)
 
-    private fun getCamcorderProfile(quality: Int): CamcorderProfile {
-        val profile = CamcorderProfile.get(quality)
-
-        val index = videoSizes.ratios().size - 1
-        val lowIndex = (index + 1) / 2
-        val midIndex = (index + lowIndex) ushr 1
-        val tempSizeSet = videoSizes.sizes(AspectRatio.of(4, 3))
-
-        val ratio = when (innerQuality) {
-            Quality.LOW -> {
-                videoSizes.ratios().elementAt(lowIndex)
+    private fun getCamcorderProfile(quality: Int): MediaProfile {
+        val profile = try{
+            if(CamcorderProfile.hasProfile(quality)) {
+                CamcorderProfile.get(quality)
+            } else {
+                CamcorderProfile.get(CamcorderProfile.QUALITY_LOW)
             }
-            Quality.MEDIUM -> {
-                videoSizes.ratios().elementAt(midIndex)
-            }
-            Quality.HIGH -> {
-                videoSizes.ratios().last()
-            }
+        } catch (ex: Exception) {
+            CamcorderProfile.get(CamcorderProfile.QUALITY_LOW)
         }
-        val sizeSet = tempSizeSet ?: videoSizes.sizes(ratio)
-        sizeSet?.also { sizes ->
+
+        val mediaProfile = MediaProfile.from(profile)
+        val tempSizes = videoSizes.sizes(AspectRatio.of(4, 3))
+
+        tempSizes?.also { sizes ->
             val size = try {
                 val activity = previewImpl.view.context as Activity
                 val screenWidth = MetricsUtils.getScreenWidth(activity)
@@ -196,11 +190,11 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
                 sizes.first()
             }
 
-            profile.videoFrameWidth = size.width
-            profile.videoFrameHeight = size.height
+            mediaProfile.videoFrameWidth = size.width
+            mediaProfile.videoFrameHeight = size.height
         }
 
-        return profile
+        return mediaProfile
     }
 
     abstract fun getVideoSource(): Int

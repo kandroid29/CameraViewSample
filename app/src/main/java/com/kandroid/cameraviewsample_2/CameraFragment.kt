@@ -151,9 +151,6 @@ class CameraFragment : Fragment(), View.OnClickListener {
                     break
                 }
             }
-            /*if (grant) {
-                cameraView.start()
-            }*/
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
@@ -162,11 +159,10 @@ class CameraFragment : Fragment(), View.OnClickListener {
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.videoProfileTv -> {
-                profileDialog.show(childFragmentManager, "ProfileDialog")
+                profileDialog.show(childFragmentManager, cameraView.getVideoProfile())
             }
             R.id.takePicture -> {
                 if (!isRecording) {
-                    setVideoQuality(CameraViewImpl.Quality.HIGH)
                     val file = StorageUtil.getStorageFile(StorageUtil.VIDEO)
                     cameraView.recordVideo(file.absolutePath, CameraView.QUALITY_HIGH)
                     Toast.makeText(context, "开始录制", Toast.LENGTH_LONG).show()
