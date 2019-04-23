@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/outsideLl"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00000000"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="264dp">
+
+        <ListView
+            android:id="@+id/bottomPopLv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@color/color_bg_main_layout"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:overScrollMode="never"
+            android:scrollbars="none" />
+
+    </FrameLayout>
+
+    <View
+        android:id="@+id/line1"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_above="@+id/line2"
+        android:background="@color/color_bg_main_layout" />
+
+    <View
+        android:id="@+id/line2"
+        style="@style/HorizontalDividerStyle"
+        android:layout_above="@+id/tv_cancel" />
+
+    <TextView
+        android:id="@+id/cancelTv"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/common_selector_bg_item_clickable"
+        android:gravity="center"
+        android:text="取消"
+        android:textColor="#ff333333"
+        android:textSize="16dp" />
+
+</LinearLayout>

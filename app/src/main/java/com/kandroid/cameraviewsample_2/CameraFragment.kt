@@ -39,6 +39,7 @@ import com.kandroid.cameraview.DefaultForegroundRenderer
 import com.kandroid.cameraview.base.CameraViewImpl
 import com.kandroid.cameraview.permission.CameraPermission
 import com.kandroid.cameraviewsample_2.dialog.MediaProfileDialog
+import com.kandroid.cameraviewsample_2.widget.BottomOptionSheet
 import kotlinx.android.synthetic.main.fragment_camera_view.*
 import java.io.FileOutputStream
 
@@ -48,6 +49,12 @@ import java.io.FileOutputStream
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraFragment : Fragment(), View.OnClickListener {
     companion object {
+        val CLARITY_OPTION_NAMES = listOf("Low", "High", "QCIF", "CIF", "480P", "720P", "1080P", "QVGA", "2160P")
+        val CLARITY_OPTION_VALUES = listOf(
+                CamcorderProfile.QUALITY_LOW, CamcorderProfile.QUALITY_HIGH, CamcorderProfile.QUALITY_QCIF, CamcorderProfile.QUALITY_CIF,
+                CamcorderProfile.QUALITY_480P, CamcorderProfile.QUALITY_720P, CamcorderProfile.QUALITY_1080P, CamcorderProfile.QUALITY_QVGA, CamcorderProfile.QUALITY_2160P
+        )
+
         fun newInstance() = CameraFragment()
     }
 
@@ -59,7 +66,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
             thread.start()
             val saveFile = StorageUtil.getStorageFile(StorageUtil.PICTURE)
             BitmapFactory.decodeByteArray(data, 0, data.size)
-                .compress(Bitmap.CompressFormat.JPEG, 100, FileOutputStream(saveFile))
+                    .compress(Bitmap.CompressFormat.JPEG, 100, FileOutputStream(saveFile))
 
             ExifInterface(saveFile.absolutePath).run {
                 setAttribute(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90.toString())
@@ -95,7 +102,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
         //setup video recording quality
         setVideoQuality(CamcorderProfile.QUALITY_720P)
         val videoQuality = cameraView.getVideoQuality()
-        clarityTv.text = when(videoQuality) {
+        clarityTv.text = when (videoQuality) {
             CamcorderProfile.QUALITY_LOW -> "Low"
             CamcorderProfile.QUALITY_HIGH -> "High"
             CamcorderProfile.QUALITY_QCIF -> "QCIF"
@@ -125,6 +132,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
         stopRecord.setOnClickListener(this)
         switchCamera.setOnClickListener(this)
         videoProfileTv.setOnClickListener(this)
+        clarityTv.setOnClickListener(this)
         cameraView.addCallback(cameraCallback)
     }
 
@@ -180,12 +188,31 @@ class CameraFragment : Fragment(), View.OnClickListener {
                 })
             }
             R.id.switchCamera -> {
-
                 cameraView.setFacing(
-                    if (cameraView.getFacing() == CameraView.FACING_FRONT) CameraView.FACING_BACK else CameraView.FACING_FRONT
+                        if (cameraView.getFacing() == CameraView.FACING_FRONT) CameraView.FACING_BACK else CameraView.FACING_FRONT
                 )
             }
+            R.id.clarityTv -> {
+                BottomOptionSheet.showPop(context!!, CLARITY_OPTION_NAMES) { pos ->
+                    setClarity(CLARITY_OPTION_VALUES[pos])
+                }
+            }
+        }
+    }
 
+    private fun setClarity(clarity: Int) {
+        cameraView.setVideoQuality(clarity)
+        clarityTv.text = when (clarity) {
+            CamcorderProfile.QUALITY_LOW -> "Low"
+            CamcorderProfile.QUALITY_HIGH -> "High"
+            CamcorderProfile.QUALITY_QCIF -> "QCIF"
+            CamcorderProfile.QUALITY_CIF -> "CIF"
+            CamcorderProfile.QUALITY_480P -> "480P"
+            CamcorderProfile.QUALITY_720P -> "720P"
+            CamcorderProfile.QUALITY_1080P -> "1080P"
+            CamcorderProfile.QUALITY_QVGA -> "QVGA"
+            CamcorderProfile.QUALITY_2160P -> "2160P"
+            else -> "Unknown"
         }
     }
 

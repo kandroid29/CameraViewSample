@@ -3,4 +3,11 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+
+    <color name="color_bg_main_layout">#fff8f9fa</color><!--主布局背景色-->
+    <color name="color_bg_divider">#ffe5e5e5</color><!--分割线的颜色-->
+
+    <color name="white">#ffffff</color>
+    <color name="line">#e5e5e5</color>
+    <color name="color_btn_pressed">#ffeeeeee</color>
 </resources>
