@@ -29,16 +29,16 @@ object StorageUtil {
         }
     }
 
-    fun getStorageFile(@FileType type: Int): File {
+    fun getStorageFile(@FileType type: Int, suffix: String = ""): File {
         val stamp = generateTimestamp()
         return if (type == PICTURE) {
             val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
                 .existOrCreate()
-            File(file, "PICTURE_$stamp.jpg")
+            File(file, "PICTURE_$stamp$suffix.jpg")
         } else {
             val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
                 .existOrCreate()
-            File(file, "VIDEO_$stamp.mp4")
+            File(file, "VIDEO_$stamp$suffix.mp4")
         }
     }
 

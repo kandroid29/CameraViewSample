@@ -42,6 +42,7 @@ import com.kandroid.cameraviewsample_2.dialog.MediaProfileDialog
 import com.kandroid.cameraviewsample_2.widget.BottomOptionSheet
 import kotlinx.android.synthetic.main.fragment_camera_view.*
 import java.io.FileOutputStream
+import java.util.*
 
 /**
  * @author  aqrLei on 2018/8/13
@@ -57,6 +58,9 @@ class CameraFragment : Fragment(), View.OnClickListener {
 
         fun newInstance() = CameraFragment()
     }
+
+    private var timer: Timer? = null
+    private var countDownSeconds: Int = 0
 
     private val profileDialog: MediaProfileDialog by lazy { MediaProfileDialog() }
 
@@ -163,15 +167,44 @@ class CameraFragment : Fragment(), View.OnClickListener {
             }
             R.id.takePicture -> {
                 if (!isRecording) {
-                    val file = StorageUtil.getStorageFile(StorageUtil.VIDEO)
+                    val file = StorageUtil.getStorageFile(StorageUtil.VIDEO, "_${cameraView.getVideoQualityText()}")
                     cameraView.recordVideo(file.absolutePath, CameraView.QUALITY_HIGH)
                     Toast.makeText(context, "开始录制", Toast.LENGTH_LONG).show()
+
+                    countDownSeconds = 10
+                    timer = Timer().also { t ->
+                        t.schedule(object : TimerTask() {
+                            override fun run() {
+                                if (countDownSeconds > 0) {
+                                    activity!!.runOnUiThread {
+                                        countDownTv.visibility = View.VISIBLE
+                                        countDownTv.text = "${countDownSeconds}s"
+                                        countDownSeconds--
+                                    }
+                                } else {
+                                    activity!!.runOnUiThread {
+                                        countDownTv.visibility = View.GONE
+                                        cameraView.stopRecord(true)
+                                        isRecording = false
+                                        stopRecord.hide(object : FloatingActionButton.OnVisibilityChangedListener() {
+                                            override fun onHidden(fab: FloatingActionButton?) {
+                                                takePicture.show()
+                                            }
+                                        })
+                                    }
+
+
+                                    t.cancel()
+                                    timer = null
+                                }
+                            }
+                        }, 0, 1000L)
+                    }
                     takePicture.hide(object : FloatingActionButton.OnVisibilityChangedListener() {
                         override fun onHidden(fab: FloatingActionButton?) {
                             stopRecord.show()
                         }
                     })
-                    // camera.takePicture()
                 }
             }
             R.id.stopRecord -> {

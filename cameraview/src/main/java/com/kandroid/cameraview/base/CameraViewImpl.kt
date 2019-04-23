@@ -55,7 +55,21 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     private var innerQuality: Quality = Quality.HIGH
     var videoQuality: Int = CamcorderProfile.QUALITY_1080P
 
-    val camcorderProfile: MediaProfile
+    val videoQualityText: String
+        get() = when (videoQuality) {
+            CamcorderProfile.QUALITY_LOW -> "Low"
+            CamcorderProfile.QUALITY_HIGH -> "High"
+            CamcorderProfile.QUALITY_QCIF -> "QCIF"
+            CamcorderProfile.QUALITY_CIF -> "CIF"
+            CamcorderProfile.QUALITY_480P -> "480P"
+            CamcorderProfile.QUALITY_720P -> "720P"
+            CamcorderProfile.QUALITY_1080P -> "1080P"
+            CamcorderProfile.QUALITY_QVGA -> "QVGA"
+            CamcorderProfile.QUALITY_2160P -> "2160P"
+            else -> "Unknown"
+        }
+
+    val mediaProfile: MediaProfile
         get() = getCamcorderProfile(videoQuality)
 
     val view: View
@@ -137,7 +151,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     protected fun setUpMediaRecorder(quality: Quality, savePath: String) {
         mediaRecorder?.also { recorder ->
             innerQuality = quality
-            camcorderProfile.also { profile ->
+            mediaProfile.also { profile ->
                 try {
                     recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
 
@@ -168,8 +182,8 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     abstract fun setMediaRecorderOrientationHint(mediaRecorder: MediaRecorder)
 
     private fun getCamcorderProfile(quality: Int): MediaProfile {
-        val profile = try{
-            if(CamcorderProfile.hasProfile(quality)) {
+        val profile = try {
+            if (CamcorderProfile.hasProfile(quality)) {
                 CamcorderProfile.get(quality)
             } else {
                 CamcorderProfile.get(CamcorderProfile.QUALITY_LOW)
