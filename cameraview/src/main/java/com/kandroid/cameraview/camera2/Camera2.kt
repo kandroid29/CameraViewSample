@@ -439,10 +439,9 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
                 success = false
                 e.printStackTrace()
                 messageCallback(e.message, CameraView.ERROR_RECORD_STOP_FAILED)
-                mediaRecorder?.release()
-                mediaRecorder = null
             }
-            record.set(success)
+
+            record.set(false)
             cameraCallback?.onRecordDone(success, mVideoOutputPath)
             if (cameraDevice != null && previewImpl.isReady) {
                 closeSession()

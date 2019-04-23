@@ -379,7 +379,7 @@ class Camera1(callback: Callback?, preview: PreviewImpl) : CameraViewImpl(callba
                 mediaRecorder = null
             }
             cameraCallback?.onRecordDone(recordSuccess, mVideoOutputPath)
-            record.set(recordSuccess)
+            record.set(false)
 
             mCamera?.reconnect()
         }

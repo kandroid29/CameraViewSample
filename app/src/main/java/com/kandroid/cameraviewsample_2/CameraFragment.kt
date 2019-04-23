@@ -171,7 +171,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
                     cameraView.recordVideo(file.absolutePath, CameraView.QUALITY_HIGH)
                     Toast.makeText(context, "开始录制", Toast.LENGTH_LONG).show()
 
-                    countDownSeconds = 10
+                    countDownSeconds = 6
                     timer = Timer().also { t ->
                         t.schedule(object : TimerTask() {
                             override fun run() {
