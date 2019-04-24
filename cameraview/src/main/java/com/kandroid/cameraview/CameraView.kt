@@ -281,55 +281,9 @@ class CameraView @JvmOverloads constructor(
 
             super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(adjustedHeight, MeasureSpec.EXACTLY))
 
-
-            /*if (isCameraOpened()) {
-                callbacks.reserveRequestLayoutOnOpen()
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-                return
-            }
-            val widthMode = View.MeasureSpec.getMode(widthMeasureSpec)
-            val heightMode = View.MeasureSpec.getMode(heightMeasureSpec)
-            if (widthMode == View.MeasureSpec.EXACTLY && heightMode != View.MeasureSpec.EXACTLY) {
-                val ratio = getAspectRatio()
-                var height = (View.MeasureSpec.getSize(widthMeasureSpec) * ratio.toFloat()).toInt()
-                if (heightMode == View.MeasureSpec.AT_MOST) {
-                    height = Math.min(height, View.MeasureSpec.getSize(heightMeasureSpec))
-                }
-                super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
-            } else if (widthMode != View.MeasureSpec.EXACTLY && heightMode == View.MeasureSpec.EXACTLY) {
-                val ratio = getAspectRatio()
-                var width = (View.MeasureSpec.getSize(heightMeasureSpec) * ratio.toFloat()).toInt()
-                if (widthMode == View.MeasureSpec.AT_MOST) {
-                    width = Math.min(width, View.MeasureSpec.getSize(widthMeasureSpec))
-                }
-                super.onMeasure(
-                    View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                    heightMeasureSpec
-                )
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-            }*/
-
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         }
-        /*val width = measuredWidth
-        val height = measuredHeight
-        var ratio: AspectRatio = getAspectRatio()
-        if (mDisplayOrientationDetector?.lastKnownDisplayOrientation ?: 0 % 180 == 0) {
-            ratio = ratio.inverse()
-        }
-        if (height < width * ratio.y / ratio.x) {
-            cameraImpl.view.measure(
-                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(width * ratio.y / ratio.x, View.MeasureSpec.EXACTLY)
-            )
-        } else {
-            cameraImpl.view.measure(
-                View.MeasureSpec.makeMeasureSpec(height * ratio.x / ratio.y, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
-            )
-        }*/
 
     }
 
