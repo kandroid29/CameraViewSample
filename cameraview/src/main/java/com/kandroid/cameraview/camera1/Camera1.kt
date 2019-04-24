@@ -22,6 +22,7 @@ import android.hardware.Camera
 import android.media.MediaRecorder
 import android.support.v4.util.SparseArrayCompat
 import android.util.SparseIntArray
+import android.widget.Toast
 import com.kandroid.cameraview.CameraView
 import com.kandroid.cameraview.base.*
 import java.io.IOException
@@ -234,6 +235,7 @@ class Camera1(callback: Callback?, preview: PreviewImpl) : CameraViewImpl(callba
                 mCameraParameters?.let { parameters ->
                     try {
                         val maxNumFocusAreas = parameters.maxNumFocusAreas
+                        parameters.focusMode = Camera.Parameters.FOCUS_MODE_AUTO
                         if (parameters.focusMode === Camera.Parameters.FOCUS_MODE_AUTO && maxNumFocusAreas > 0) {
                             val halfOfCameraWidth = previewImpl.width / 2
                             val scaleSizeX = 1000 / halfOfCameraWidth.toDouble()//相机坐标相对于点击坐标的x比例
@@ -281,7 +283,7 @@ class Camera1(callback: Callback?, preview: PreviewImpl) : CameraViewImpl(callba
                             parameters.focusAreas = focusAreas
                             camera.parameters = mCameraParameters
                             camera.cancelAutoFocus()
-                            camera.autoFocus { success, camera -> }
+                            camera.autoFocus { _, _ -> }
                         } else {
                             messageCallback("该摄像头不支持自动聚焦", CameraView.TIPS_CAMERA_FEATURE_NOT_SUPPORT)
                         }

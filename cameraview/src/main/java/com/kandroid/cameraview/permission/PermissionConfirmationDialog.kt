@@ -39,7 +39,7 @@ class PermissionConfirmationDialog : DialogFragment() {
     private var reqCode: Int = 0
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-//        val parent = parentFragment
+        val parent = parentFragment
         return AlertDialog.Builder(activity)
                 .setMessage(R.string.request_permission)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
