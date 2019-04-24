@@ -17,6 +17,7 @@
 package com.kandroid.cameraview.camera1
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Rect
 import android.hardware.Camera
 import android.media.MediaRecorder
@@ -35,7 +36,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 
 @Suppress("DEPRECATION")
-class Camera1(callback: Callback?, preview: PreviewImpl) : CameraViewImpl(callback, preview) {
+class Camera1(
+    private val context: Context,
+    callback: Callback?,
+    preview: PreviewImpl
+) : CameraViewImpl(callback, preview) {
     companion object {
         private const val INVALID_CAMERA_ID = -1
         private val INTERNAL_FACINGS = SparseIntArray()
@@ -135,6 +140,9 @@ class Camera1(callback: Callback?, preview: PreviewImpl) : CameraViewImpl(callba
             }
         }
 
+    override fun isBestOption(facing: Int): Boolean {
+        return !CameraView.getCamera2Support(context, facing)
+    }
 
     override fun start(): Boolean {
         super.start()

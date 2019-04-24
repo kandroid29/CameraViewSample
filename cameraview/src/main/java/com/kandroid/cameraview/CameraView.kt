@@ -1,8 +1,11 @@
 package com.kandroid.cameraview
 
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.os.*
 import android.support.annotation.IntDef
 import android.support.v4.view.ViewCompat
@@ -20,10 +23,11 @@ import java.util.*
 /**
  * @author aqrlei on 2019/3/26
  */
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyle: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0
 ) : FrameLayout(context, attrs, defStyle) {
 
     companion object {
@@ -50,6 +54,27 @@ class CameraView @JvmOverloads constructor(
         const val QUALITY_LOW = "1"
         const val QUALITY_MEDIUM = "2"
         const val QUALITY_HIGH = "3"
+
+        fun getCamera2Support(context: Context, facing: Int): Boolean {
+            val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            val innerFacing = when (facing) {
+                FACING_BACK -> CameraCharacteristics.LENS_FACING_BACK
+                FACING_FRONT -> CameraCharacteristics.LENS_FACING_FRONT
+                else -> return false
+            }
+
+            val cameraIds = cameraManager.cameraIdList
+            for (id in cameraIds) {
+                val characteristics = cameraManager.getCameraCharacteristics(id)
+                val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
+                if (lensFacing == innerFacing) {
+                    val hardwareLevel = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
+                    return hardwareLevel != null && hardwareLevel != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY
+                }
+            }
+            return false
+        }
+
     }
 
 
@@ -61,10 +86,13 @@ class CameraView @JvmOverloads constructor(
     @Retention(AnnotationRetention.SOURCE)
     annotation class Flash
 
-    val isSurfaceAvailable: Boolean
-        get() = preview.isReady
+    private var cameraFacing: Int = FACING_BACK
+    private lateinit var aspectRatio: AspectRatio
+    private var autoFocus: Boolean = false
+    private var flash: Int = -1
+    var quality: Int = -1
 
-    private var cameraImpl: CameraViewImpl
+    private lateinit var cameraImpl: CameraViewImpl
 
     private var adjustViewBounds: Boolean = false
         set(value) {
@@ -84,28 +112,14 @@ class CameraView @JvmOverloads constructor(
 
     init {
         preview = createPreview(context)
-//        cameraImpl = Camera1(callbacks, preview)
-        cameraImpl = when {
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP -> {
-                Camera1(callbacks, preview)
-            }
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.M -> {
-                Camera2(callbacks, preview, context)
-            }
-            else -> {
-                Camera2Api23(callbacks, preview, context)
-            }
-        }
+        cameraImpl = DefaultCamera(callbacks, preview)
         context.obtainStyledAttributes(attrs, R.styleable.CameraView)?.apply {
-            setFacing(getInt(R.styleable.CameraView_facing, FACING_BACK))
-            setAspectRatio(
-                    AspectRatio.parse(
-                            getString(R.styleable.CameraView_aspectRatio)
-                                    ?: Constants.DEFAULT_ASPECT_RATIO.toString()
-                    )
+            cameraFacing = getInt(R.styleable.CameraView_facing, FACING_BACK)
+            aspectRatio = AspectRatio.parse(
+                getString(R.styleable.CameraView_aspectRatio) ?: Constants.DEFAULT_ASPECT_RATIO.toString()
             )
-            setAutoFocus(getBoolean(R.styleable.CameraView_autoFocus, true))
-            setFlash(getInt(R.styleable.CameraView_flash, FLASH_AUTO))
+            autoFocus = getBoolean(R.styleable.CameraView_autoFocus, false)
+            flash = getInt(R.styleable.CameraView_flash, FLASH_AUTO)
             adjustViewBounds = getBoolean(R.styleable.CameraView_android_adjustViewBounds, false)
             recycle()
         }
@@ -127,17 +141,25 @@ class CameraView @JvmOverloads constructor(
     }
 
     fun setVideoQuality(quality: Int) {
+        this.quality = quality
         cameraImpl.videoQuality = quality
     }
 
-    fun getVideoQuality() = cameraImpl.videoQuality
+    fun getVideoQuality() = quality
 
     fun getVideoQualityText() = cameraImpl.videoQualityText
 
     fun getVideoProfile() = cameraImpl.mediaProfile
 
     fun setFacing(@Facing facing: Int) {
-        cameraImpl.facing = facing
+        if (cameraFacing != facing) {
+            cameraFacing = facing
+            cameraImpl.stop()
+            if (!cameraImpl.isBestOption(cameraFacing)) {
+                chooseCameraImpl()
+            }
+            cameraImpl.start()
+        }
     }
 
     @Facing
@@ -146,18 +168,21 @@ class CameraView @JvmOverloads constructor(
     fun getSupportedAspectRatio() = cameraImpl.supportedAspectRatios
 
     private fun setAspectRatio(ratio: AspectRatio) {
+        aspectRatio = ratio
         cameraImpl.setAspectRatio(ratio)
     }
 
     private fun getAspectRatio() = cameraImpl.aspectRatio ?: Constants.DEFAULT_ASPECT_RATIO
 
     private fun setAutoFocus(autoFocus: Boolean) {
+        this.autoFocus = autoFocus
         cameraImpl.autoFocus = autoFocus
     }
 
     private fun getAutoFocus() = cameraImpl.autoFocus
 
     private fun setFlash(@Flash flash: Int) {
+        this.flash = flash
         cameraImpl.flash = flash
     }
 
@@ -166,12 +191,29 @@ class CameraView @JvmOverloads constructor(
 
     fun start() {
         refreshPreview()
-        if (!cameraImpl.start()) {
-            val state = onSaveInstanceState()
-            cameraImpl = Camera1(callbacks, preview)
-            onRestoreInstanceState(state)
-            cameraImpl.start()
+        if (!cameraImpl.isBestOption(cameraFacing)) {
+            chooseCameraImpl()
         }
+        cameraImpl.start()
+    }
+
+    private fun chooseCameraImpl() {
+        cameraImpl = when {
+            !getCamera2Support(context, cameraFacing) || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP -> {
+                Camera1(context, callbacks, preview)
+            }
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.M -> {
+                Camera2(callbacks, preview, context)
+            }
+            else -> {
+                Camera2Api23(callbacks, preview, context)
+            }
+        }
+        cameraImpl.facing = cameraFacing
+        cameraImpl.setAspectRatio(aspectRatio)
+        cameraImpl.autoFocus = autoFocus
+        cameraImpl.flash = flash
+        cameraImpl.videoQuality = quality
     }
 
     fun stop() {

@@ -104,7 +104,7 @@ class CameraFragment : Fragment(), View.OnClickListener {
         cameraPermission = CameraPermission(this.activity!!)
 
         //setup video recording quality
-        setVideoQuality(CamcorderProfile.QUALITY_720P)
+        cameraView.quality = CamcorderProfile.QUALITY_720P
         val videoQuality = cameraView.getVideoQuality()
         clarityTv.text = when (videoQuality) {
             CamcorderProfile.QUALITY_LOW -> "Low"
@@ -243,19 +243,5 @@ class CameraFragment : Fragment(), View.OnClickListener {
             CamcorderProfile.QUALITY_2160P -> "2160P"
             else -> "Unknown"
         }
-    }
-
-    private fun setVideoQuality(videoQuality: CameraViewImpl.Quality) {
-        val quality = when (videoQuality) {
-            CameraViewImpl.Quality.LOW -> CamcorderProfile.QUALITY_QVGA
-            CameraViewImpl.Quality.MEDIUM -> CamcorderProfile.QUALITY_480P
-            CameraViewImpl.Quality.HIGH -> CamcorderProfile.QUALITY_720P
-            else -> CamcorderProfile.QUALITY_HIGH
-        }
-        cameraView.setVideoQuality(quality)
-    }
-
-    private fun setVideoQuality(quality: Int) {
-        cameraView.setVideoQuality(quality)
     }
 }

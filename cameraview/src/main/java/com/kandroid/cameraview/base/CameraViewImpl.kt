@@ -53,7 +53,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     protected val cameraOpenCloseLock = Semaphore(1)
 
     private var innerQuality: Quality = Quality.HIGH
-    var videoQuality: Int = CamcorderProfile.QUALITY_1080P
+    var videoQuality: Int = CamcorderProfile.QUALITY_720P
 
     val videoQualityText: String
         get() = when (videoQuality) {
@@ -86,6 +86,8 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     abstract var autoFocus: Boolean
 
     abstract var flash: Int
+
+    abstract fun isBestOption(facing: Int): Boolean
 
     /**
      * @return `true` if the implementation was able to start the camera session.

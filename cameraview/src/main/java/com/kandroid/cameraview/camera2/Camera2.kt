@@ -43,7 +43,29 @@ import java.util.concurrent.TimeUnit
 @SuppressLint("MissingPermission")
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 open class Camera2(callback: Callback?, preview: PreviewImpl, private val context: Context) :
-        CameraViewImpl(callback, preview) {
+    CameraViewImpl(callback, preview) {
+
+    companion object {
+
+        private const val TAG = "Camera2"
+
+        private val INTERNAL_FACINGS = SparseIntArray()
+
+        init {
+            INTERNAL_FACINGS.put(Constants.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK)     //1
+            INTERNAL_FACINGS.put(Constants.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT)   //0
+        }
+
+        /**
+         * Max preview width that is guaranteed by Camera2 API
+         */
+        private const val MAX_PREVIEW_WIDTH = 1920
+
+        /**
+         * Max preview height that is guaranteed by Camera2 API
+         */
+        private const val MAX_PREVIEW_HEIGHT = 1080
+    }
 
 
     private val cameraManager: CameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -108,15 +130,15 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         override fun onPreCaptureRequired() {
             previewRequestBuilder?.let { requestBuilder ->
                 requestBuilder.set(
-                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START
+                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START
                 )
                 setState(STATE_PRE_CAPTURE)
                 try {
                     captureSession?.capture(requestBuilder.build(), this, null)
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE
+                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE
                     )
                 } catch (e: CameraAccessException) {
                     messageCallback(e.message, CameraView.ERROR_CAPTURE_SESSION_FAILED)
@@ -230,6 +252,10 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             }
         }
 
+    override fun isBestOption(facing: Int): Boolean {
+        return CameraView.getCamera2Support(context, facing)
+    }
+
     fun runOrDelay(runnable: () -> Unit) {
         if (previewImpl.isReady) {
             runnable()
@@ -265,17 +291,17 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
     override fun touchFocus(touchX: Int, touchY: Int) {
         previewRequestBuilder?.let { captureRequestBuilder ->
             val region =
-                    getFocusRegion(captureRequestBuilder, previewImpl.width, previewImpl.height, touchX, touchY)
+                getFocusRegion(captureRequestBuilder, previewImpl.width, previewImpl.height, touchX, touchY)
             captureRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(region))
             captureRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, arrayOf(region))
             captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO)
             captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_TRIGGER,
-                    CameraMetadata.CONTROL_AF_TRIGGER_START
+                CaptureRequest.CONTROL_AF_TRIGGER,
+                CameraMetadata.CONTROL_AF_TRIGGER_START
             )
             captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START
+                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START
             )
             try {
                 if (captureSession != null) {
@@ -294,11 +320,11 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
     }
 
     private fun getFocusRegion(
-            requestBuilder: CaptureRequest.Builder,
-            previewWidth: Int,
-            previewHeight: Int,
-            x: Int,
-            y: Int
+        requestBuilder: CaptureRequest.Builder,
+        previewWidth: Int,
+        previewHeight: Int,
+        x: Int,
+        y: Int
     ): MeteringRectangle {
 
         val isLand = getOrientation() == Constants.LANDSCAPE_90 || getOrientation() == Constants.LANDSCAPE_270
@@ -314,12 +340,12 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         RectF(focusY + offSetY, focusX + offSetX, focusY + 100 + offSetY, focusX + offSetX + 100)
 
         return MeteringRectangle(
-                Rect(
-                        (focusY + offSetY).toInt(),
-                        (focusX + offSetX).toInt(),
-                        (focusY + 100 + offSetY).toInt(),
-                        (focusX + offSetX + 100).toInt()
-                ), 1000
+            Rect(
+                (focusY + offSetY).toInt(),
+                (focusX + offSetX).toInt(),
+                (focusY + 100 + offSetY).toInt(),
+                (focusX + offSetX + 100).toInt()
+            ), 1000
         )
     }
 
@@ -413,7 +439,7 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
 
     private fun getOrientation(): Int {
         val sensorOrientation = cameraCharacteristics?.get(CameraCharacteristics.SENSOR_ORIENTATION)
-                ?: 0
+            ?: 0
         return when (sensorOrientation) {
             Constants.LANDSCAPE_90 -> {
                 (360 - mDisplayOrientation + Constants.LANDSCAPE_90) % 360
@@ -512,14 +538,12 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             }
             for (id in cameraIds) {
                 val characteristics = cameraManager.getCameraCharacteristics(id)
-                val level = characteristics.get(
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL
-                )
+                val level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
                 if (level == null || level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
                     continue
                 }
                 val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
-                        ?: throw NullPointerException("Unexpected state: LENS_FACING null")
+                    ?: throw NullPointerException("Unexpected state: LENS_FACING null")
                 if (lensFacing == internalFacing) {
                     cameraId = id
                     cameraCharacteristics = characteristics
@@ -530,13 +554,13 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             cameraId = cameraIds[0]
             cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
             val level = cameraCharacteristics?.get(
-                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL
             )
             if (level == null || level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
                 return false
             }
             val lensFacing = cameraCharacteristics?.get(CameraCharacteristics.LENS_FACING)
-                    ?: throw NullPointerException("Unexpected state: LENS_FACING null")
+                ?: throw NullPointerException("Unexpected state: LENS_FACING null")
 
             val count = INTERNAL_FACINGS.size()
             for (i in 0 until count) {
@@ -564,7 +588,7 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
      */
     private fun setUpSizes() {
         val map = cameraCharacteristics?.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                ?: throw IllegalStateException("Failed to get configuration map: $cameraId")
+            ?: throw IllegalStateException("Failed to get configuration map: $cameraId")
         previewSizes.clear()
         for (size in map.getOutputSizes(previewImpl.outputClass)) {
             val width = size.width
@@ -607,8 +631,8 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         }
         val largest = pictureSize
         imageReader = ImageReader.newInstance(
-                largest.width, largest.height,
-                ImageFormat.JPEG, /* maxImages */ 2
+            largest.width, largest.height,
+            ImageFormat.JPEG, /* maxImages */ 2
         )
         imageReader?.setOnImageAvailableListener(onImageAvailableListener, null)
     }
@@ -634,8 +658,8 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             previewRequestBuilder = cameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
             previewRequestBuilder?.addTarget(surface)
             cameraDevice?.createCaptureSession(
-                    Arrays.asList(surface, imageReader?.surface),
-                    mSessionCallback, null
+                Arrays.asList(surface, imageReader?.surface),
+                mSessionCallback, null
             )
         } catch (e: CameraAccessException) {
             throw RuntimeException("Failed to start camera session")
@@ -678,25 +702,25 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
     private fun updateAutoFocus() {
         if (mAutoFocus) {
             val modes = cameraCharacteristics?.get(
-                    CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES
+                CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES
             )
             // Auto focus is not supported
             if (modes == null || modes.isEmpty() || (modes.size == 1 && modes[0] == CameraCharacteristics.CONTROL_AF_MODE_OFF)) {
                 mAutoFocus = false
                 previewRequestBuilder?.set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_OFF
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_OFF
                 )
             } else {
                 previewRequestBuilder?.set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 )
             }
         } else {
             previewRequestBuilder?.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF
+                CaptureRequest.CONTROL_AF_MODE,
+                CaptureRequest.CONTROL_AF_MODE_OFF
             )
         }
     }
@@ -709,52 +733,52 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             when (flash) {
                 Constants.FLASH_OFF -> {
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
                     )
                     requestBuilder.set(
-                            CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_OFF
+                        CaptureRequest.FLASH_MODE,
+                        CaptureRequest.FLASH_MODE_OFF
                     )
                 }
                 Constants.FLASH_ON -> {
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH
                     )
                     requestBuilder.set(
-                            CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_OFF
+                        CaptureRequest.FLASH_MODE,
+                        CaptureRequest.FLASH_MODE_OFF
                     )
                 }
                 Constants.FLASH_TORCH -> {
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
                     )
                     requestBuilder.set(
-                            CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_TORCH
+                        CaptureRequest.FLASH_MODE,
+                        CaptureRequest.FLASH_MODE_TORCH
                     )
                 }
                 Constants.FLASH_AUTO -> {
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
                     )
                     requestBuilder.set(
-                            CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_OFF
+                        CaptureRequest.FLASH_MODE,
+                        CaptureRequest.FLASH_MODE_OFF
                     )
                 }
                 Constants.FLASH_RED_EYE -> {
                     requestBuilder.set(
-                            CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
                     )
                     requestBuilder.set(
-                            CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_OFF
+                        CaptureRequest.FLASH_MODE,
+                        CaptureRequest.FLASH_MODE_OFF
                     )
                 }
             }
@@ -783,8 +807,8 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
     private fun lockFocus() {
         previewRequestBuilder?.let { requestBuilder ->
             requestBuilder.set(
-                    CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_START
+                CaptureRequest.CONTROL_AF_TRIGGER,
+                CaptureRequest.CONTROL_AF_TRIGGER_START
             )
             try {
                 mCaptureCallback.setState(PictureCaptureCallback.STATE_LOCKING)
@@ -804,35 +828,35 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         cameraDevice?.let { cameraDevice ->
             try {
                 val captureRequestBuilder = cameraDevice.createCaptureRequest(
-                        CameraDevice.TEMPLATE_STILL_CAPTURE
+                    CameraDevice.TEMPLATE_STILL_CAPTURE
                 )
                 imageReader?.let { captureRequestBuilder.addTarget(it.surface) }
                 captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        previewRequestBuilder?.get(CaptureRequest.CONTROL_AF_MODE)
+                    CaptureRequest.CONTROL_AF_MODE,
+                    previewRequestBuilder?.get(CaptureRequest.CONTROL_AF_MODE)
                 )
                 updateCaptureStillFlash(captureRequestBuilder)
                 // Calculate JPEG orientation.
                 val sensorOrientation = cameraCharacteristics?.get(CameraCharacteristics.SENSOR_ORIENTATION)
-                        ?: 0
+                    ?: 0
                 captureRequestBuilder.set(
-                        CaptureRequest.JPEG_ORIENTATION,
-                        (sensorOrientation + mDisplayOrientation * (if (cameraFacing == Constants.FACING_FRONT) 1 else -1) +
-                                360) % 360
+                    CaptureRequest.JPEG_ORIENTATION,
+                    (sensorOrientation + mDisplayOrientation * (if (cameraFacing == Constants.FACING_FRONT) 1 else -1) +
+                            360) % 360
                 )
                 // Stop preview and capture a still picture.
                 captureSession?.stopRepeating()
                 captureSession?.capture(
-                        captureRequestBuilder.build(),
-                        object : CameraCaptureSession.CaptureCallback() {
-                            override fun onCaptureCompleted(
-                                    session: CameraCaptureSession,
-                                    request: CaptureRequest,
-                                    result: TotalCaptureResult
-                            ) {
-                                unlockFocus()
-                            }
-                        }, null
+                    captureRequestBuilder.build(),
+                    object : CameraCaptureSession.CaptureCallback() {
+                        override fun onCaptureCompleted(
+                            session: CameraCaptureSession,
+                            request: CaptureRequest,
+                            result: TotalCaptureResult
+                        ) {
+                            unlockFocus()
+                        }
+                    }, null
                 )
             } catch (e: CameraAccessException) {
                 Log.e(TAG, "Cannot capture a still picture.", e)
@@ -850,16 +874,16 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
     private fun unlockFocus() {
         previewRequestBuilder?.let { requestBuilder ->
             requestBuilder.set(
-                    CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL
+                CaptureRequest.CONTROL_AF_TRIGGER,
+                CaptureRequest.CONTROL_AF_TRIGGER_CANCEL
             )
             try {
                 captureSession?.capture(requestBuilder.build(), mCaptureCallback, null)
                 updateAutoFocus()
                 updateFlash()
                 previewRequestBuilder?.set(
-                        CaptureRequest.CONTROL_AF_TRIGGER,
-                        CaptureRequest.CONTROL_AF_TRIGGER_IDLE
+                    CaptureRequest.CONTROL_AF_TRIGGER,
+                    CaptureRequest.CONTROL_AF_TRIGGER_IDLE
                 )
                 updateView(mCaptureCallback)
                 mCaptureCallback.setState(PictureCaptureCallback.STATE_PREVIEW)
@@ -873,35 +897,35 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         when (flash) {
             Constants.FLASH_OFF -> {
                 captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON
                 )
                 captureRequestBuilder.set(
-                        CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_OFF
+                    CaptureRequest.FLASH_MODE,
+                    CaptureRequest.FLASH_MODE_OFF
                 )
             }
             Constants.FLASH_ON -> captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH
+                CaptureRequest.CONTROL_AE_MODE,
+                CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH
             )
             Constants.FLASH_TORCH -> {
                 captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON
                 )
                 captureRequestBuilder.set(
-                        CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_TORCH
+                    CaptureRequest.FLASH_MODE,
+                    CaptureRequest.FLASH_MODE_TORCH
                 )
             }
             Constants.FLASH_AUTO -> captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
+                CaptureRequest.CONTROL_AE_MODE,
+                CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
             )
             Constants.FLASH_RED_EYE -> captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
+                CaptureRequest.CONTROL_AE_MODE,
+                CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
             )
         }
     }
@@ -918,15 +942,15 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         }
 
         override fun onCaptureProgressed(
-                session: CameraCaptureSession,
-                request: CaptureRequest, partialResult: CaptureResult
+            session: CameraCaptureSession,
+            request: CaptureRequest, partialResult: CaptureResult
         ) {
             process(partialResult)
         }
 
         override fun onCaptureCompleted(
-                session: CameraCaptureSession,
-                request: CaptureRequest, result: TotalCaptureResult
+            session: CameraCaptureSession,
+            request: CaptureRequest, result: TotalCaptureResult
         ) {
             process(result)
         }
@@ -949,8 +973,8 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
                 STATE_PRE_CAPTURE -> {
                     val ae = result.get(CaptureResult.CONTROL_AE_STATE)
                     if ((ae == null || ae == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                                    ae == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED ||
-                                    ae == CaptureResult.CONTROL_AE_STATE_CONVERGED)
+                                ae == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED ||
+                                ae == CaptureResult.CONTROL_AE_STATE_CONVERGED)
                     ) {
                         setState(STATE_WAITING)
                     }
@@ -985,28 +1009,6 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
             const val STATE_CAPTURING = 5
         }
 
-    }
-
-    companion object {
-
-        private const val TAG = "Camera2"
-
-        private val INTERNAL_FACINGS = SparseIntArray()
-
-        init {
-            INTERNAL_FACINGS.put(Constants.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK)
-            INTERNAL_FACINGS.put(Constants.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT)
-        }
-
-        /**
-         * Max preview width that is guaranteed by Camera2 API
-         */
-        private const val MAX_PREVIEW_WIDTH = 1920
-
-        /**
-         * Max preview height that is guaranteed by Camera2 API
-         */
-        private const val MAX_PREVIEW_HEIGHT = 1080
     }
 
 }
