@@ -158,6 +158,7 @@ class CameraView @JvmOverloads constructor(
             if (!cameraImpl.isBestOption(cameraFacing)) {
                 chooseCameraImpl()
             }
+            cameraImpl.facing = cameraFacing
             cameraImpl.start()
         }
     }
