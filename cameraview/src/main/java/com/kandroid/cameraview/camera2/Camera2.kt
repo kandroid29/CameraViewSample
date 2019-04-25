@@ -651,8 +651,8 @@ open class Camera2(callback: Callback?, preview: PreviewImpl, private val contex
         }
 
         Log.d("cameraCallback", "startPreviewSession")
-//        val previewSize = chooseOptimalSize()
-//        previewImpl.setBufferSize(previewSize.width, previewSize.height)
+        val previewSize = chooseOptimalSize()
+        previewImpl.setBufferSize(previewSize.width, previewSize.height)
         val surface = previewImpl.surface
         try {
             previewRequestBuilder = cameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
