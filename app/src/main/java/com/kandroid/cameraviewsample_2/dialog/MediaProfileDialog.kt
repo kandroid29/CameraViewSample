@@ -72,12 +72,13 @@ class MediaProfileDialog : DialogFragment() {
             }
 
             val item = when (pos) {
-                0 -> ProfileItem("码率", mediaProfile.videoBitRate.toString())
-                1 -> ProfileItem("编码器", videoCodec)
-                2 -> ProfileItem("分辨率高度", mediaProfile.originHeight.toString())
-                3 -> ProfileItem("分辨率宽度", mediaProfile.originWidth.toString())
-                4 -> ProfileItem("帧率", mediaProfile.videoFrameRate.toString())
-                5 -> ProfileItem("文件格式", mediaProfile.fileFormatText)
+                0 -> ProfileItem("实现类", mediaProfile.cameraImpl)
+                1 -> ProfileItem("码率", mediaProfile.videoBitRate.toString())
+                2 -> ProfileItem("编码器", videoCodec)
+                3 -> ProfileItem("分辨率高度", mediaProfile.originHeight.toString())
+                4 -> ProfileItem("分辨率宽度", mediaProfile.originWidth.toString())
+                5 -> ProfileItem("帧率", mediaProfile.videoFrameRate.toString())
+                6 -> ProfileItem("文件格式", mediaProfile.fileFormatText)
                 else -> null
             }
             item?.apply {

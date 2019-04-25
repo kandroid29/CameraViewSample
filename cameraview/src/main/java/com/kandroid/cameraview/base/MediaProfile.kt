@@ -17,7 +17,8 @@ class MediaProfile(
         val originHeight: Int,
         var videoFrameWidth: Int,
         var videoFrameHeight: Int,
-        val videoFrameRate: Int
+        val videoFrameRate: Int,
+        var cameraImpl: String = ""
 ) {
     companion object {
         fun from(profile: CamcorderProfile): MediaProfile {

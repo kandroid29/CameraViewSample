@@ -25,9 +25,9 @@ import java.util.*
  */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyle: Int = 0
+        context: Context,
+        attrs: AttributeSet? = null,
+        defStyle: Int = 0
 ) : FrameLayout(context, attrs, defStyle) {
 
     companion object {
@@ -86,7 +86,7 @@ class CameraView @JvmOverloads constructor(
     @Retention(AnnotationRetention.SOURCE)
     annotation class Flash
 
-    private var cameraFacing: Int = FACING_BACK
+    var cameraFacing: Int = FACING_BACK
     private lateinit var aspectRatio: AspectRatio
     private var autoFocus: Boolean = false
     private var flash: Int = -1
@@ -116,7 +116,8 @@ class CameraView @JvmOverloads constructor(
         context.obtainStyledAttributes(attrs, R.styleable.CameraView)?.apply {
             cameraFacing = getInt(R.styleable.CameraView_facing, FACING_BACK)
             aspectRatio = AspectRatio.parse(
-                getString(R.styleable.CameraView_aspectRatio) ?: Constants.DEFAULT_ASPECT_RATIO.toString()
+                    getString(R.styleable.CameraView_aspectRatio)
+                            ?: Constants.DEFAULT_ASPECT_RATIO.toString()
             )
             autoFocus = getBoolean(R.styleable.CameraView_autoFocus, false)
             flash = getInt(R.styleable.CameraView_flash, FLASH_AUTO)
@@ -161,6 +162,49 @@ class CameraView @JvmOverloads constructor(
             cameraImpl.facing = cameraFacing
             cameraImpl.start()
         }
+    }
+
+    fun changeAPI(cameraAPI: String) {
+        cameraImpl.stop()
+
+        cameraImpl = when (cameraAPI) {
+            "Camera1" -> {
+                if (cameraImpl !is Camera1) {
+                    Camera1(context, callbacks, preview)
+                } else cameraImpl
+            }
+            "Camera2" -> {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    if (cameraImpl !is Camera2) Camera2(callbacks, preview, context) else cameraImpl
+                } else {
+                    if (cameraImpl !is Camera2Api23) Camera2Api23(callbacks, preview, context) else cameraImpl
+                }
+            }
+            "Default" -> {
+                when {
+                    !getCamera2Support(context, cameraFacing) || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP -> {
+                        Camera1(context, callbacks, preview)
+                    }
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.M -> {
+                        Camera2(callbacks, preview, context)
+                    }
+                    else -> {
+                        Camera2Api23(callbacks, preview, context)
+                    }
+                }
+            }
+            else -> {
+                cameraImpl
+            }
+        }
+
+        cameraImpl.facing = cameraFacing
+        cameraImpl.setAspectRatio(aspectRatio)
+        cameraImpl.autoFocus = autoFocus
+        cameraImpl.flash = flash
+        cameraImpl.videoQuality = quality
+
+        cameraImpl.start()
     }
 
     @Facing

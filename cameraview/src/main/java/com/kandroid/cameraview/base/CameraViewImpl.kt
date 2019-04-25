@@ -195,6 +195,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
         }
 
         val mediaProfile = MediaProfile.from(profile)
+        mediaProfile.cameraImpl = this.javaClass.simpleName
         val tempSizes = videoSizes.sizes(AspectRatio.of(4, 3))
 
         tempSizes?.also { sizes ->

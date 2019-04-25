@@ -36,7 +36,6 @@ import android.widget.Toast
 import com.aqrlei.camera.library.StorageUtil
 import com.kandroid.cameraview.CameraView
 import com.kandroid.cameraview.DefaultForegroundRenderer
-import com.kandroid.cameraview.base.CameraViewImpl
 import com.kandroid.cameraview.permission.CameraPermission
 import com.kandroid.cameraviewsample_2.dialog.MediaProfileDialog
 import com.kandroid.cameraviewsample_2.widget.BottomOptionSheet
@@ -61,6 +60,9 @@ class CameraFragment : Fragment(), View.OnClickListener {
 
     private var timer: Timer? = null
     private var countDownSeconds: Int = 0
+    private var isRecording = false
+    private var cameraAPI: String = "Default"
+    private val cameraAPIOptions: List<String> by lazy { createAPIOptions() }
 
     private val profileDialog: MediaProfileDialog by lazy { MediaProfileDialog() }
 
@@ -126,18 +128,39 @@ class CameraFragment : Fragment(), View.OnClickListener {
         if (!cameraPermission.hasAllPermissionsGranted()) {
             cameraPermission.requestPermissions()
         } else {
+            cameraAPITv.text = "Default"
             cameraView.start()
         }
     }
 
-    private var isRecording = false
+    private fun createAPIOptions(): List<String> {
+        return when {
+            !CameraView.getCamera2Support(context!!, cameraView.cameraFacing) || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP -> {
+                listOf("Camera1", "Default")
+            }
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.M -> {
+                listOf("Camera1", "Camera2", "Default")
+            }
+            else -> {
+                listOf("Camera1", "Camera2", "Default")
+            }
+        }
+    }
+
     private fun initListener() {
         takePicture.setOnClickListener(this)
         stopRecord.setOnClickListener(this)
         switchCamera.setOnClickListener(this)
         videoProfileTv.setOnClickListener(this)
         clarityTv.setOnClickListener(this)
+        cameraAPITv.setOnClickListener(this)
         cameraView.addCallback(cameraCallback)
+    }
+
+    private fun setCameraAPI(api: String) {
+        cameraAPI = api
+        cameraAPITv.text = cameraAPI
+        cameraView.changeAPI(cameraAPI)
     }
 
     override fun onPause() {
@@ -224,6 +247,11 @@ class CameraFragment : Fragment(), View.OnClickListener {
             R.id.clarityTv -> {
                 BottomOptionSheet.showPop(context!!, CLARITY_OPTION_NAMES) { pos ->
                     setClarity(CLARITY_OPTION_VALUES[pos])
+                }
+            }
+            R.id.cameraAPITv -> {
+                BottomOptionSheet.showPop(context!!, cameraAPIOptions) { pos ->
+                    setCameraAPI(cameraAPIOptions[pos])
                 }
             }
         }

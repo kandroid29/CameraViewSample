@@ -35,6 +35,15 @@
             android:textSize="16dp" />
 
         <TextView
+            android:id="@+id/cameraAPITv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="#ffff0000"
+            android:textSize="16dp"
+            android:text="请选择API" />
+
+        <TextView
             android:id="@+id/videoProfileTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
