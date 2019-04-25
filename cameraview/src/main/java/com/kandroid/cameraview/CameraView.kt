@@ -92,7 +92,7 @@ class CameraView @JvmOverloads constructor(
     private var flash: Int = -1
     var quality: Int = -1
 
-    private lateinit var cameraImpl: CameraViewImpl
+    private var cameraImpl: CameraViewImpl
 
     private var adjustViewBounds: Boolean = false
         set(value) {
