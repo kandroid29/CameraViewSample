@@ -48,7 +48,7 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     protected var mediaRecorder: MediaRecorder? = null
 
     protected val cameraStateLock = Any()
-    private var mBackgroundThread: HandlerThread? = null
+    private var backgroundThread: HandlerThread? = null
     protected var backgroundHandler: Handler? = null
     protected val cameraOpenCloseLock = Semaphore(1)
 
@@ -108,22 +108,22 @@ abstract class CameraViewImpl(protected val cameraCallback: Callback?, protected
     abstract fun release()
 
     private fun startBackgroundThread() {
-        mBackgroundThread = HandlerThread("CameraBackground")
-        mBackgroundThread?.start()
+        backgroundThread = HandlerThread("CameraBackground")
+        backgroundThread?.start()
         synchronized(cameraStateLock) {
-            backgroundHandler = Handler(mBackgroundThread?.looper)
+            backgroundHandler = Handler(backgroundThread?.looper)
         }
     }
 
     private fun stopBackgroundThread() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            mBackgroundThread?.quitSafely()
+            backgroundThread?.quitSafely()
         } else {
-            mBackgroundThread?.quit()
+            backgroundThread?.quit()
         }
         try {
-            mBackgroundThread?.join()
-            mBackgroundThread = null
+            backgroundThread?.join()
+            backgroundThread = null
             synchronized(cameraStateLock) {
                 backgroundHandler = null
             }
