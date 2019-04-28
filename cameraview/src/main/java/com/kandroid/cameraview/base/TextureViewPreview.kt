@@ -96,9 +96,29 @@ class TextureViewPreview(context: Context, parent: ViewGroup) : PreviewImpl() {
      */
     private fun configureTransform() {
         val matrix = Matrix()
+        val ratio = 3.0f / 4
+
+        if(height * ratio > width) {
+            val previewWidth = height * ratio
+            val scale = previewWidth / width
+            val translate = (previewWidth - width) / 2
+
+            matrix.setScale(scale, 1f)
+            matrix.postTranslate(-translate, 0f)
+        } else {
+            val previewHeight = width / ratio
+            val scale = previewHeight / height
+            val translate = (previewHeight - height) / 2
+
+            matrix.setScale(1f, scale)
+            matrix.setTranslate(0f, -translate)
+        }
+
+        /*matrix.setScale(2f, 1f)
+        matrix.postTranslate(-100f, 0f)*/
 
         // 如果屏幕是横向
-        if (mDisplayOrientation % 180 == 90) {
+        /*if (mDisplayOrientation % 180 == 90) {
             val width = width
             val height = height
             // Rotate the camera preview when the screen is landscape.
@@ -127,7 +147,7 @@ class TextureViewPreview(context: Context, parent: ViewGroup) : PreviewImpl() {
                 , 0, 4)
         } else if (mDisplayOrientation == 180) {
             matrix.postRotate(180f, width / 2F, height / 2F)
-        }
+        }*/
         textureView.setTransform(matrix)
     }
 
